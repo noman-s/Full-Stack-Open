@@ -8,7 +8,7 @@ sequenceDiagram
     server-->>browser: Response with header 'Location: /exampleapp/notes' to redirect to
     deactivate server
 
-    browset-->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
+    browser-->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
@@ -45,7 +45,7 @@ sequenceDiagram
     server-->>browser: Response with header 'Location: /exampleapp/notes' to redirect to
     deactivate server
 
-    browset-->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
+    browser-->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
