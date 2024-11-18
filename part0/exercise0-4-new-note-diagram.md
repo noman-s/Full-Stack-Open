@@ -8,8 +8,6 @@ sequenceDiagram
     server-->>browser: Response with header 'Location: /exampleapp/notes' to redirect to
     deactivate server
 
-    browser-->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
-    activate server
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
     server-->>browser: HTML document
@@ -45,8 +43,6 @@ sequenceDiagram
     server-->>browser: Response with header 'Location: /exampleapp/notes' to redirect to
     deactivate server
 
-    browser-->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
-    activate server
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
     server-->>browser: HTML document
