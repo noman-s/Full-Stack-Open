@@ -1,7 +1,7 @@
 ```
 sequenceDiagram
     participant browser
-    participant client
+    participant server
 
     browser-->>server: GET https://studies.cs.helsinki.fi/exampleapp/spa
     activate server
