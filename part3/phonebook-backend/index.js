@@ -1,11 +1,30 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
+const Person = require("./models/person");
+
+const app = express();
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
+  }
+
+  next(error);
+};
+
+const unknownEndpoint = (request, response) =>
+  response.status(404).send({
+    error: `${request.body.name} was already deleted from the server or never existed!`,
+  });
 
 morgan.token("body", (request, response) => {
   return JSON.stringify(request.body);
 });
-
-const app = express();
 
 app.use(express.static("dist"));
 app.use(express.json());
@@ -24,80 +43,78 @@ app.use(
   }),
 );
 
-let persons = [
-  {
-    id: "1",
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: "2",
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: "3",
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 
 app.get("/info", (request, response) => {
-  const info = `<p>persons has info for ${persons.length} people</p>
-    <p>${new Date()}</p>`;
-  response.send(info);
+  Person.find({}).then((persons) => {
+    const info = `<p>persons has info for ${persons.length} people</p>
+      <p>${new Date()}</p>`;
+    response.send(info);
+  });
 });
 
-app.get("/api/persons/:id", (request, response) => {
-  const id = request.params.id;
-  const phoneNumber = persons.find((number) => number.id === id);
-  if (phoneNumber) {
-    response.json(phoneNumber);
-  } else {
-    response.status(404).end();
-  }
+app.get("/api/persons/:id", (request, response, next) => {
+  Person.findById(request.params.id)
+    .then((person) => {
+      if (person) {
+        response.json(person);
+      } else {
+        next();
+      }
+    })
+    .catch((error) => next(error));
 });
 
-app.delete("/api/persons/:id", (request, response) => {
-  const id = request.params.id;
-  persons = persons.filter((number) => number.id !== id);
-  response.status(204).end();
+app.delete("/api/persons/:id", (request, response, next) => {
+  Person.findByIdAndDelete(request.params.id)
+    .then((result) => {
+      console.log(result);
+      response.json(result).status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
 
-  if (!body.name || !body.number) {
-    return response.status(400).json({
-      error: "Name or number missing",
-    });
-  }
-
-  if (persons.map((person) => person.name).includes(body.name)) {
-    return response.status(400).json({
-      error: "Name must be unique",
-    });
-  }
-
-  const person = {
+  const person = Person({
     name: body.name,
     number: body.number,
-    id: String(Math.floor(Math.random() * 1000000)),
-  };
+  });
 
-  persons = persons.concat(person);
-  response.json(person);
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
-const PORT = process.env.PORT || 3001;
+app.put("/api/persons/:id", (request, response, next) => {
+  const { name, number } = request.body;
+
+  Person.findByIdAndUpdate(
+    request.params.id,
+    { name, number },
+    { new: true, runValidators: true, context: "query" },
+  )
+    .then((updatedPerson) => {
+      if (updatedPerson) {
+        response.json(updatedPerson);
+      } else {
+        next();
+      }
+    })
+    .catch((error) => next(error));
+});
+
+app.use(unknownEndpoint);
+app.use(errorHandler);
+
+const PORT = process.env.PORT;
 app.listen(PORT);
 console.log(`App listening on port ${PORT}`);
